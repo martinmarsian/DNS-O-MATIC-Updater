@@ -7,7 +7,7 @@
 
 #import <PreferencePanes/PreferencePanes.h>
 
-@interface DNS_O_MATIC_Updater : NSPreferencePane
+@interface DNS_O_MATIC_Updater : NSPreferencePane <NSTableViewDataSource, NSTableViewDelegate>
 
 - (void)mainViewDidLoad;
 

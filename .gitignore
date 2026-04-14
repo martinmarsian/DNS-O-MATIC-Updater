@@ -1,0 +1,30 @@
+# Xcode Build-Produkte
+build/
+DerivedData/
+*.o
+*.d
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Xcode User-Einstellungen (projektspezifisch, nicht team-weit)
+xcuserdata/
+*.xcscmblueprint
+*.xccheckout
+
+# Paketmanager
+Pods/
+.build/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Build-Produkte im Projektordner
+DNS-O-MATIC\ Updater/Products/
+Products/
