@@ -1,5 +1,17 @@
 # DNS-O-MATIC Updater — Release Notes
 
+## Version 1.0.2 (Build 3)
+
+### Fehlerbehebungen
+
+- **state.plist lesbar**: LaunchDaemon-Skript setzt nach jedem Update `chmod 644` auf `state.plist`, sodass die Preference Pane den Status lesen kann (zuvor: Permission denied).
+- **Datumsformat systemabhängig**: Alle gespeicherten Daten werden intern als ISO 8601 gespeichert und bei der Anzeige immer in das lokale Systemformat umgewandelt (z. B. `16.04.2026, 21:12:00` auf deutschen Macs, `4/16/26, 9:12:00 PM` auf amerikanischen).
+- **LaunchAgent-Status sichtbar**: Auch wenn nur der LaunchAgent (kein LaunchDaemon) aktiv ist, wird „Letztes Update" korrekt aktualisiert.
+- **Hosts-Tabelle sofort gefüllt**: Hostnamen werden beim Öffnen der Pane direkt aufgelöst, ohne dass „Auflösen" geklickt werden muss.
+- **Neuester Wert gewinnt**: Die Pane vergleicht LaunchAgent- und LaunchDaemon-Status und zeigt immer den aktuelleren an.
+
+---
+
 ## Version 1.0.1 (Build 2)
 
 ### Fehlerbehebungen und Verbesserungen
