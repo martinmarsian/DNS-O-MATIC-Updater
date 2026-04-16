@@ -1,5 +1,15 @@
 # DNS-O-MATIC Updater — Release Notes
 
+## Version 1.0.2 (Build 4)
+
+### Lokalisierung
+
+- **Englisch und Deutsch**: Die gesamte Benutzeroberfläche passt sich automatisch an die Systemsprache an (macOS Spracheinstellungen). Alle Beschriftungen, Schaltflächen, Statusmeldungen und Fehlertexte sind auf Englisch und Deutsch verfügbar.
+- **Datumsformat systemabhängig**: Das Datumsformat folgt der in macOS eingestellten Region (z. B. `16.04.2026, 21:12:00` für Deutschland, `4/16/26, 9:12:00 PM` für USA).
+- Weitere Sprachen können durch einfaches Hinzufügen einer `xx.lproj/Localizable.strings`-Datei ergänzt werden.
+
+---
+
 ## Version 1.0.2 (Build 3)
 
 ### Fehlerbehebungen
