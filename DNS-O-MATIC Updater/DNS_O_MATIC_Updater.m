@@ -61,7 +61,8 @@ static NSString * const kDaemonScript =
     @"STATE=\"/Library/Application Support/DNS-O-MATIC Updater/state.plist\"\n"
     @"defaults write \"$STATE\" lastIP \"$IP\"\n"
     @"defaults write \"$STATE\" lastUpdateDate \"$NOW\"\n"
-    @"defaults write \"$STATE\" lastResult \"$RESULT\"\n";
+    @"defaults write \"$STATE\" lastResult \"$RESULT\"\n"
+    @"chmod 644 \"$STATE\"\n";
 
 // ── Private Schnittstelle ─────────────────────────────────────────────────────
 
@@ -465,29 +466,60 @@ static NSString * const kDaemonScript =
     NSString *savedHosts = [self.defaults stringForKey:kPrefHosts];
     if (savedHosts.length > 0) {
         self.hostsField.stringValue = savedHosts;
+        [self resolveAllHosts];
     }
 }
 
 - (void)loadDaemonState {
-    NSString *lastIP     = [self.defaults stringForKey:kPrefLastIP];
-    NSString *lastDate   = [self.defaults stringForKey:kPrefLastUpdate];
-    NSString *lastResult = [self.defaults stringForKey:kPrefLastResult];
+    NSISO8601DateFormatter *isoFmt = [[NSISO8601DateFormatter alloc] init];
 
-    // LaunchDaemon schreibt in state.plist – neuersten Wert verwenden
-    NSString *statePath = @"/Library/Application Support/DNS-O-MATIC Updater/state.plist";
-    NSDictionary *daemonState = [NSDictionary dictionaryWithContentsOfFile:statePath];
-    if (daemonState) {
-        NSString *dDate = daemonState[@"lastUpdateDate"];
-        if (!lastDate || [dDate compare:lastDate] == NSOrderedDescending) {
-            lastDate   = dDate;
-            lastIP     = daemonState[@"lastIP"];
-            lastResult = daemonState[@"lastResult"];
+    // ── NSUserDefaults (LaunchAgent oder manuelles Update) ────────────────
+    NSString *defIP     = [self.defaults stringForKey:kPrefLastIP];
+    NSString *defDateV  = [self.defaults stringForKey:kPrefLastUpdate];
+    NSString *defResult = [self.defaults stringForKey:kPrefLastResult];
+    // Datum immer als ISO normalisieren (ältere Builds speicherten lokalisiert)
+    NSString *defISO = nil;
+    if (defDateV) {
+        if ([isoFmt dateFromString:defDateV]) {
+            defISO = defDateV; // bereits ISO
+        } else {
+            NSDate *d = [self parsedFromLocalizedDate:defDateV];
+            if (d) defISO = [isoFmt stringFromDate:d];
         }
     }
 
-    if (lastIP)     self.currentIPField.stringValue  = lastIP;
-    if (lastDate)   self.lastUpdateField.stringValue = lastDate;
-    if (lastResult) self.statusField.stringValue     = lastResult;
+    // ── LaunchDaemon state.plist ──────────────────────────────────────────
+    NSDictionary *daemonState = [NSDictionary dictionaryWithContentsOfFile:
+        @"/Library/Application Support/DNS-O-MATIC Updater/state.plist"];
+    NSString *daemonISO    = daemonState[@"lastUpdateDate"];
+    NSString *daemonIP     = daemonState[@"lastIP"];
+    NSString *daemonResult = daemonState[@"lastResult"];
+
+    // ── Neuesten Wert bestimmen ───────────────────────────────────────────
+    NSString *winnerISO, *winnerIP, *winnerResult;
+    if (daemonISO && (!defISO || [daemonISO compare:defISO] == NSOrderedDescending)) {
+        winnerISO    = daemonISO;
+        winnerIP     = daemonIP;
+        winnerResult = daemonResult;
+    } else {
+        winnerISO    = defISO;
+        winnerIP     = defIP;
+        winnerResult = defResult;
+    }
+
+    // ── ISO → lokalisiertes Datum ─────────────────────────────────────────
+    NSString *displayDate = winnerISO;
+    NSDate *winnerDate = [isoFmt dateFromString:winnerISO];
+    if (winnerDate) {
+        displayDate = [NSDateFormatter
+            localizedStringFromDate:winnerDate
+                          dateStyle:NSDateFormatterShortStyle
+                          timeStyle:NSDateFormatterMediumStyle];
+    }
+
+    if (winnerIP)     self.currentIPField.stringValue  = winnerIP;
+    if (displayDate)  self.lastUpdateField.stringValue = displayDate;
+    if (winnerResult) self.statusField.stringValue     = winnerResult;
 }
 
 - (void)selectIntervalValue:(NSInteger)seconds {
@@ -785,18 +817,20 @@ static NSString * const kDaemonScript =
             : (e.localizedDescription ?: @"Unbekannter Fehler");
         result = [result stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 
-        NSString *now = [NSDateFormatter
+        NSISO8601DateFormatter *isoFmt = [[NSISO8601DateFormatter alloc] init];
+        NSString *nowISO = [isoFmt stringFromDate:[NSDate date]];
+        NSString *nowDisplay = [NSDateFormatter
             localizedStringFromDate:[NSDate date]
             dateStyle:NSDateFormatterShortStyle
             timeStyle:NSDateFormatterMediumStyle];
 
-        [self.defaults setObject:ip     forKey:kPrefLastIP];
-        [self.defaults setObject:now    forKey:kPrefLastUpdate];
-        [self.defaults setObject:result forKey:kPrefLastResult];
+        [self.defaults setObject:ip      forKey:kPrefLastIP];
+        [self.defaults setObject:nowISO  forKey:kPrefLastUpdate];
+        [self.defaults setObject:result  forKey:kPrefLastResult];
         [self.defaults synchronize];
 
         dispatch_async(dispatch_get_main_queue(), ^{
-            self.lastUpdateField.stringValue = now;
+            self.lastUpdateField.stringValue = nowDisplay;
             self.statusField.stringValue     = result;
             [self.spinner stopAnimation:nil];
             self.spinner.hidden = YES;
@@ -1063,6 +1097,17 @@ static NSString * const kDaemonScript =
 }
 
 #pragma mark - Hilfsmethoden
+
+// Wandelt ein lokalisiertes Datum zurück in ISO 8601 für den Vergleich.
+// Gibt den Original-String zurück wenn Parsing fehlschlägt.
+// Parst ein lokalisiertes Datum (ShortDate + MediumTime) zurück in NSDate.
+// Wird nur für Rückwärtskompatibilität mit alten Werten in NSUserDefaults benötigt.
+- (NSDate *)parsedFromLocalizedDate:(NSString *)localDate {
+    NSDateFormatter *fmt = [[NSDateFormatter alloc] init];
+    fmt.dateStyle = NSDateFormatterShortStyle;
+    fmt.timeStyle = NSDateFormatterMediumStyle;
+    return [fmt dateFromString:localDate];
+}
 
 - (void)updateAutomationCheckboxes {
     self.launchAgentCheck.state  = [self isLaunchAgentInstalled]
