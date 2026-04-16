@@ -28,6 +28,7 @@ set -euo pipefail
 SIGN_ID="${DOM_SIGN_ID:?DOM_SIGN_ID nicht gesetzt (Developer ID Application SHA1)}"
 NOTARY_PROFILE="${DOM_NOTARY_PROFILE:-DNSOMaticRelease}"
 GITHUB_REPO="${DOM_GITHUB_REPO:-}"
+ENTITLEMENTS="$(dirname "$0")/DNS-O-MATIC Updater/DNS_O_MATIC_Updater.entitlements"
 # ──────────────────────────────────────────────────────────────────────────────
 
 # ── Argumente prüfen ──────────────────────────────────────────────────────────
@@ -65,6 +66,10 @@ echo "=== Signieren mit Developer ID Application ==="
 # Für ein schlankes prefPane ohne eingebettete Frameworks reicht --deep.
 # Sollte das prefPane eigene Frameworks enthalten, diese zuerst einzeln signieren.
 
+# Entitlements prüfen
+[ -f "$ENTITLEMENTS" ] || { echo "ERROR: Entitlements nicht gefunden: $ENTITLEMENTS"; exit 1; }
+echo "  Entitlements: $ENTITLEMENTS"
+
 # Frameworks signieren (falls vorhanden)
 FW_DIR="$PREFPANE/Contents/Frameworks"
 if [ -d "$FW_DIR" ]; then
@@ -88,9 +93,10 @@ for plug_dir in "$PREFPANE/Contents/PlugIns" "$PREFPANE/Contents/XPCServices"; d
     fi
 done
 
-# prefPane signieren
+# prefPane signieren (mit Entitlements)
 echo "  Signing: DNS-O-MATIC Updater.prefPane"
 codesign --force --sign "$SIGN_ID" --options runtime --timestamp \
+    --entitlements "$ENTITLEMENTS" \
     --deep "$PREFPANE"
 
 echo "Signatur verifizieren..."
@@ -107,18 +113,31 @@ echo "ZIP erstellt: $ZIP"
 echo "=== ZIP notarisieren ==="
 NOTARY_OUT=$(xcrun notarytool submit "$ZIP" \
     --keychain-profile "$NOTARY_PROFILE" \
-    --wait 2>&1)
+    --wait 2>&1) || true
 echo "$NOTARY_OUT"
 
+NOTARY_ID=$(echo "$NOTARY_OUT" | grep -o 'id: [0-9a-f-]*' | head -1 | awk '{print $2}')
+
 if ! echo "$NOTARY_OUT" | grep -q "status: Accepted"; then
-    NOTARY_ID=$(echo "$NOTARY_OUT" | grep -o 'id: [0-9a-f-]*' | head -1 | awk '{print $2}')
     echo "ERROR: Notarisierung fehlgeschlagen!"
     if [ -n "$NOTARY_ID" ]; then
-        echo "Details: xcrun notarytool log $NOTARY_ID --keychain-profile \"$NOTARY_PROFILE\""
+        echo "=== Notarytool Log ==="
+        xcrun notarytool log "$NOTARY_ID" --keychain-profile "$NOTARY_PROFILE" || true
     fi
     exit 1
 fi
 echo "Notarisierung abgeschlossen."
+
+# ── Stapling ──────────────────────────────────────────────────────────────────
+echo "=== Notarisierungsticket anheften (staple) ==="
+xcrun stapler staple "$PREFPANE"
+echo "Stapling OK."
+
+# ── ZIP neu erstellen (mit gestapeltem Ticket) ────────────────────────────────
+echo "=== ZIP mit gestapeltem prefPane neu erstellen ==="
+rm -f "$ZIP"
+ditto -c -k --keepParent "$PREFPANE" "$ZIP"
+echo "ZIP erstellt: $ZIP"
 
 # ── Dateigröße ────────────────────────────────────────────────────────────────
 ZIP_SIZE=$(wc -c < "$ZIP" | tr -d ' ')

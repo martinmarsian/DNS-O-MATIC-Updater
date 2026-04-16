@@ -115,6 +115,13 @@ static NSString * const kDaemonScript =
     [self checkOpenDNSStatus];
 }
 
+- (void)willSelect {
+    // Wird bei jedem Öffnen der Pane aufgerufen (nicht nur beim ersten Laden)
+    [self loadDaemonState];
+    [self refreshCurrentIP];
+    [self checkOpenDNSStatus];
+}
+
 #pragma mark - UI-Aufbau
 
 - (void)buildUI {
@@ -453,18 +460,34 @@ static NSString * const kDaemonScript =
     if (interval == 0) interval = kDefaultInterval;
     [self selectIntervalValue:interval];
 
-    NSString *lastIP     = [self.defaults stringForKey:kPrefLastIP];
-    NSString *lastDate   = [self.defaults stringForKey:kPrefLastUpdate];
-    NSString *lastResult = [self.defaults stringForKey:kPrefLastResult];
-    if (lastIP)     self.currentIPField.stringValue  = lastIP;
-    if (lastDate)   self.lastUpdateField.stringValue = lastDate;
-    if (lastResult) self.statusField.stringValue     = lastResult;
+    [self loadDaemonState];
 
     NSString *savedHosts = [self.defaults stringForKey:kPrefHosts];
     if (savedHosts.length > 0) {
         self.hostsField.stringValue = savedHosts;
-        [self resolveAllHosts];
     }
+}
+
+- (void)loadDaemonState {
+    NSString *lastIP     = [self.defaults stringForKey:kPrefLastIP];
+    NSString *lastDate   = [self.defaults stringForKey:kPrefLastUpdate];
+    NSString *lastResult = [self.defaults stringForKey:kPrefLastResult];
+
+    // LaunchDaemon schreibt in state.plist – neuersten Wert verwenden
+    NSString *statePath = @"/Library/Application Support/DNS-O-MATIC Updater/state.plist";
+    NSDictionary *daemonState = [NSDictionary dictionaryWithContentsOfFile:statePath];
+    if (daemonState) {
+        NSString *dDate = daemonState[@"lastUpdateDate"];
+        if (!lastDate || [dDate compare:lastDate] == NSOrderedDescending) {
+            lastDate   = dDate;
+            lastIP     = daemonState[@"lastIP"];
+            lastResult = daemonState[@"lastResult"];
+        }
+    }
+
+    if (lastIP)     self.currentIPField.stringValue  = lastIP;
+    if (lastDate)   self.lastUpdateField.stringValue = lastDate;
+    if (lastResult) self.statusField.stringValue     = lastResult;
 }
 
 - (void)selectIntervalValue:(NSInteger)seconds {

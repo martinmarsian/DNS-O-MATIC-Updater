@@ -1,5 +1,17 @@
 # DNS-O-MATIC Updater — Release Notes
 
+## Version 1.0.1 (Build 2)
+
+### Fehlerbehebungen und Verbesserungen
+
+- **LaunchDaemon-Status synchronisiert**: Letztes Update, IP und Ergebnis werden nun auch dann korrekt angezeigt, wenn der LaunchDaemon das Update durchgeführt hat (nicht nur bei manuellem Update). Der Daemon schreibt seinen Status in `/Library/Application Support/DNS-O-MATIC Updater/state.plist`, die Pane liest beim Öffnen den neuesten Wert.
+- **Pane aktualisiert sich bei jedem Öffnen**: IP-Adresse, Host-Auflösungen und OpenDNS-Status werden jetzt bei jedem Öffnen der Pane automatisch neu abgerufen — nicht nur beim ersten Laden.
+- **Optische Verbesserungen**: Abstände aller Bereiche zur rechten Fensterkante vereinheitlicht; Icon mit korrektem Innenabstand für konsistente Darstellung in den Systemeinstellungen.
+- **Farbige Statusanzeige in der Hosts-Tabelle**: IP- und Statusspalte werden nun farbig hervorgehoben (grün = aktuell, orange = veraltet, rot = nicht erreichbar).
+- **Notarisierung**: Release-Skript robuster gegen Fehlerausgabe von `notarytool`; Stapling des Notarisierungstickets vor ZIP-Erstellung.
+
+---
+
 ## Version 1.0
 
 Erste öffentliche Version des DNS-O-MATIC Updater als macOS System Preferences Preference Pane.
