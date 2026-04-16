@@ -22,6 +22,10 @@ static NSString * const kLaunchAgentLabel   = @"com.jorgemartin.dns-o-matic-upda
 static NSString * const kLaunchDaemonLabel  = @"com.jorgemartin.dns-o-matic-updater-daemon";
 static NSInteger  const kDefaultInterval    = 300; // 5 Minuten
 
+// Lokalisierung aus dem Pane-Bundle (nicht dem Host-Prozess-Bundle)
+#define L(key) [[NSBundle bundleForClass:[DNS_O_MATIC_Updater class]] \
+                    localizedStringForKey:(key) value:(key) table:nil]
+
 // ── Update-Skripte ────────────────────────────────────────────────────────────
 
 static NSString * const kAgentScript =
@@ -130,19 +134,19 @@ static NSString * const kDaemonScript =
     root.wantsLayer = YES;
 
     // ── Abschnitt: Account ──────────────────────────────────────────────────
-    NSBox *credBox = [self makeSectionBox:@"DNS-O-MATIC Account"];
+    NSBox *credBox = [self makeSectionBox:L(@"section.account")];
 
-    NSTextField *userLabel = [self makeRightLabel:@"Benutzername:"];
-    NSTextField *passLabel = [self makeRightLabel:@"Passwort:"];
+    NSTextField *userLabel = [self makeRightLabel:L(@"label.username")];
+    NSTextField *passLabel = [self makeRightLabel:L(@"label.password")];
 
     self.usernameField = [self makeTextField];
-    self.usernameField.placeholderString = @"DNS-O-MATIC Benutzername";
+    self.usernameField.placeholderString = L(@"placeholder.username");
 
     self.passwordField = [[NSSecureTextField alloc] init];
     self.passwordField.translatesAutoresizingMaskIntoConstraints = NO;
-    self.passwordField.placeholderString = @"Passwort";
+    self.passwordField.placeholderString = L(@"placeholder.password");
 
-    NSButton *saveBtn = [NSButton buttonWithTitle:@"Speichern"
+    NSButton *saveBtn = [NSButton buttonWithTitle:L(@"button.save")
                                            target:self
                                            action:@selector(saveCredentials:)];
     saveBtn.translatesAutoresizingMaskIntoConstraints = NO;
@@ -176,12 +180,12 @@ static NSString * const kDaemonScript =
         options:NSLayoutFormatAlignAllCenterY metrics:nil views:cv1]];
 
     // ── Abschnitt: Status ───────────────────────────────────────────────────
-    NSBox *statusBox = [self makeSectionBox:@"Status"];
+    NSBox *statusBox = [self makeSectionBox:L(@"section.status")];
 
-    NSTextField *ipLbl     = [self makeRightLabel:@"Aktuelle IP:"];
-    NSTextField *lastLbl   = [self makeRightLabel:@"Letztes Update:"];
-    NSTextField *resultLbl = [self makeRightLabel:@"Ergebnis:"];
-    NSTextField *odLbl     = [self makeRightLabel:@"OpenDNS:"];
+    NSTextField *ipLbl     = [self makeRightLabel:L(@"label.currentip")];
+    NSTextField *lastLbl   = [self makeRightLabel:L(@"label.lastupdate")];
+    NSTextField *resultLbl = [self makeRightLabel:L(@"label.result")];
+    NSTextField *odLbl     = [self makeRightLabel:L(@"label.opendns")];
 
     self.currentIPField  = [self makeValueLabel];
     self.lastUpdateField = [self makeValueLabel];
@@ -194,7 +198,7 @@ static NSString * const kDaemonScript =
     self.spinner.translatesAutoresizingMaskIntoConstraints = NO;
     self.spinner.hidden = YES;
 
-    NSButton *updateNowBtn = [NSButton buttonWithTitle:@"Jetzt aktualisieren"
+    NSButton *updateNowBtn = [NSButton buttonWithTitle:L(@"button.updatenow")
                                                 target:self
                                                 action:@selector(updateNow:)];
     updateNowBtn.translatesAutoresizingMaskIntoConstraints = NO;
@@ -236,14 +240,14 @@ static NSString * const kDaemonScript =
         options:0 metrics:nil views:cv2]];
 
     // ── Abschnitt: Hosts ────────────────────────────────────────────────────
-    NSBox *hostsBox = [self makeSectionBox:@"Hosts"];
+    NSBox *hostsBox = [self makeSectionBox:L(@"section.hosts")];
 
-    NSTextField *hostsLbl = [self makeRightLabel:@"Hosts:"];
+    NSTextField *hostsLbl = [self makeRightLabel:L(@"label.hosts")];
 
     self.hostsField = [self makeTextField];
-    self.hostsField.placeholderString = @"z.B. host1.duckdns.org, host2.duckdns.org";
+    self.hostsField.placeholderString = L(@"placeholder.hosts");
 
-    NSButton *resolveBtn = [NSButton buttonWithTitle:@"Auflösen"
+    NSButton *resolveBtn = [NSButton buttonWithTitle:L(@"button.resolve")
                                               target:self
                                               action:@selector(resolveHosts:)];
     resolveBtn.translatesAutoresizingMaskIntoConstraints = NO;
@@ -258,19 +262,19 @@ static NSString * const kDaemonScript =
     self.hostsTable.delegate = self;
 
     NSTableColumn *colHost = [[NSTableColumn alloc] initWithIdentifier:@"hostname"];
-    colHost.title = @"Hostname";
+    colHost.title = L(@"col.hostname");
     colHost.width = 220;
     colHost.minWidth = 120;
     colHost.editable = NO;
 
     NSTableColumn *colIP = [[NSTableColumn alloc] initWithIdentifier:@"ip"];
-    colIP.title = @"Aufgelöste IP (extern)";
+    colIP.title = L(@"col.ip");
     colIP.width = 150;
     colIP.minWidth = 80;
     colIP.editable = NO;
 
     NSTableColumn *colStatus = [[NSTableColumn alloc] initWithIdentifier:@"status"];
-    colStatus.title = @"Status";
+    colStatus.title = L(@"col.status");
     colStatus.width = 100;
     colStatus.minWidth = 60;
     colStatus.editable = NO;
@@ -303,14 +307,14 @@ static NSString * const kDaemonScript =
         @"V:|-(10)-[hl]-(8)-[sv(95)]-(10)-|" options:0 metrics:nil views:cv4]];
 
     // ── Abschnitt: Automatische Updates ────────────────────────────────────
-    NSBox *autoBox = [self makeSectionBox:@"Automatische Updates"];
+    NSBox *autoBox = [self makeSectionBox:L(@"section.auto")];
 
-    NSTextField *intervalLbl = [self makeRightLabel:@"Intervall:"];
+    NSTextField *intervalLbl = [self makeRightLabel:L(@"label.interval")];
 
     self.intervalPopUp = [[NSPopUpButton alloc] init];
     self.intervalPopUp.translatesAutoresizingMaskIntoConstraints = NO;
-    NSArray *titles    = @[@"Alle 5 Minuten", @"Alle 10 Minuten",
-                           @"Alle 30 Minuten", @"Jede Stunde", @"Alle 6 Stunden"];
+    NSArray *titles    = @[L(@"interval.5min"), L(@"interval.10min"),
+                           L(@"interval.30min"), L(@"interval.1hour"), L(@"interval.6hours")];
     NSArray *intervals = @[@300, @600, @1800, @3600, @21600];
     for (NSUInteger i = 0; i < titles.count; i++) {
         [self.intervalPopUp addItemWithTitle:titles[i]];
@@ -320,13 +324,13 @@ static NSString * const kDaemonScript =
     [self.intervalPopUp setAction:@selector(intervalChanged:)];
 
     self.launchAgentCheck = [NSButton
-        checkboxWithTitle:@"Bei Benutzer-Login starten (LaunchAgent)"
+        checkboxWithTitle:L(@"checkbox.agent")
                    target:self
                    action:@selector(toggleLaunchAgent:)];
     self.launchAgentCheck.translatesAutoresizingMaskIntoConstraints = NO;
 
     self.launchDaemonCheck = [NSButton
-        checkboxWithTitle:@"Beim Systemstart starten (LaunchDaemon, erfordert Admin)"
+        checkboxWithTitle:L(@"checkbox.daemon")
                    target:self
                    action:@selector(toggleLaunchDaemon:)];
     self.launchDaemonCheck.translatesAutoresizingMaskIntoConstraints = NO;
@@ -430,16 +434,15 @@ static NSString * const kDaemonScript =
     NSString *colID = tableColumn.identifier;
     NSColor *color = [NSColor labelColor]; // Standard
 
+    NSString *code = entry[@"statusCode"] ?: @"";
     if ([colID isEqualToString:@"ip"]) {
-        NSString *ip = entry[@"ip"] ?: @"";
-        if ([ip isEqualToString:@"Nicht erreichbar"]) {
+        if ([code isEqualToString:@"notreachable"]) {
             color = [NSColor systemRedColor];
         }
     } else if ([colID isEqualToString:@"status"]) {
-        NSString *status = entry[@"status"] ?: @"";
-        if ([status hasPrefix:@"✓"]) {
+        if ([code isEqualToString:@"current"]) {
             color = [NSColor systemGreenColor];
-        } else if ([status hasPrefix:@"⚠"]) {
+        } else if ([code isEqualToString:@"outdated"] || [code isEqualToString:@"notreachable"]) {
             color = [NSColor systemOrangeColor];
         }
     }
@@ -544,7 +547,7 @@ static NSString * const kDaemonScript =
     NSString *password = self.passwordField.stringValue;
 
     if (username.length == 0 || password.length == 0) {
-        [self showAlert:@"Bitte Benutzernamen und Passwort eingeben."];
+        [self showAlert:L(@"alert.nocredentials")];
         return;
     }
 
@@ -558,7 +561,7 @@ static NSString * const kDaemonScript =
     if ([self isLaunchAgentInstalled])  [self reinstallLaunchAgent];
     if ([self isLaunchDaemonInstalled]) [self reinstallLaunchDaemon];
 
-    self.credStatusLabel.stringValue = @"Gespeichert.";
+    self.credStatusLabel.stringValue = L(@"status.saved");
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)),
                    dispatch_get_main_queue(), ^{
         self.credStatusLabel.stringValue = @"";
@@ -627,22 +630,25 @@ static NSString * const kDaemonScript =
         NSString *hostname = entry[@"hostname"];
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             NSString *resolved = [self resolveHostnameExternally:hostname];
-            NSString *ip, *status;
+            NSString *ip, *status, *statusCode;
             if (!resolved) {
-                ip     = @"Nicht erreichbar";
-                status = @"⚠";
+                ip         = L(@"status.notreachable");
+                status     = L(@"status.outdated");
+                statusCode = @"notreachable";
             } else {
                 ip = resolved;
                 BOOL matches = [resolved isEqualToString:currentIP]
                                && ![currentIP isEqualToString:@"—"]
                                && currentIP.length > 0;
-                status = matches ? @"✓ aktuell" : @"⚠ veraltet";
+                status     = matches ? L(@"status.current") : L(@"status.outdated");
+                statusCode = matches ? @"current" : @"outdated";
             }
             dispatch_async(dispatch_get_main_queue(), ^{
                 for (NSMutableDictionary *e in self.hostsData) {
                     if ([e[@"hostname"] isEqualToString:hostname]) {
-                        e[@"ip"]     = ip;
-                        e[@"status"] = status;
+                        e[@"ip"]         = ip;
+                        e[@"status"]     = status;
+                        e[@"statusCode"] = statusCode;
                         break;
                     }
                 }
@@ -732,7 +738,7 @@ static NSString * const kDaemonScript =
         [task launchAndReturnError:&err];
         if (err) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                self.openDNSStatusField.stringValue = @"⚠ Prüfung fehlgeschlagen";
+                self.openDNSStatusField.stringValue = L(@"opendns.failed");
                 self.openDNSStatusField.textColor = [NSColor systemOrangeColor];
             });
             return;
@@ -750,10 +756,10 @@ static NSString * const kDaemonScript =
 
         dispatch_async(dispatch_get_main_queue(), ^{
             if (active) {
-                self.openDNSStatusField.stringValue = @"✓ aktiv";
+                self.openDNSStatusField.stringValue = L(@"opendns.active");
                 self.openDNSStatusField.textColor = [NSColor systemGreenColor];
             } else {
-                self.openDNSStatusField.stringValue = @"✗ nicht aktiv";
+                self.openDNSStatusField.stringValue = L(@"opendns.inactive");
                 self.openDNSStatusField.textColor = [NSColor systemRedColor];
             }
         });
@@ -765,14 +771,14 @@ static NSString * const kDaemonScript =
     NSString *password = self.passwordField.stringValue;
 
     if (username.length == 0 || password.length == 0) {
-        [self showAlert:@"Bitte zuerst Credentials speichern."];
+        [self showAlert:L(@"alert.savefirst")];
         return;
     }
 
     dispatch_async(dispatch_get_main_queue(), ^{
         self.spinner.hidden = NO;
         [self.spinner startAnimation:nil];
-        self.statusField.stringValue = @"IP wird ermittelt…";
+        self.statusField.stringValue = L(@"status.resolving");
     });
 
     NSURL *ipURL = [NSURL URLWithString:@"https://api.ipify.org"];
@@ -780,7 +786,7 @@ static NSString * const kDaemonScript =
                                 completionHandler:^(NSData *d, NSURLResponse *r, NSError *e) {
         if (!d) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                self.statusField.stringValue = @"IP-Ermittlung fehlgeschlagen.";
+                self.statusField.stringValue = L(@"status.ipfailed");
                 [self.spinner stopAnimation:nil];
                 self.spinner.hidden = YES;
             });
@@ -791,7 +797,7 @@ static NSString * const kDaemonScript =
 
         dispatch_async(dispatch_get_main_queue(), ^{
             self.currentIPField.stringValue = ip;
-            self.statusField.stringValue = @"DNS-O-MATIC wird aktualisiert…";
+            self.statusField.stringValue = L(@"status.updating");
         });
 
         [self updateDNSWithIP:ip username:username password:password];
@@ -1028,7 +1034,7 @@ static NSString * const kDaemonScript =
     NSString *password = [self keychainPasswordForUsername:username];
 
     if (username.length == 0 || password.length == 0) {
-        [self showAlert:@"Bitte zuerst Credentials speichern."];
+        [self showAlert:L(@"alert.savefirst")];
         return;
     }
 
@@ -1073,7 +1079,7 @@ static NSString * const kDaemonScript =
     NSDictionary *errInfo = nil;
     [as executeAndReturnError:&errInfo];
     if (errInfo) {
-        [self showAlert:[NSString stringWithFormat:@"Installation fehlgeschlagen:\n%@",
+        [self showAlert:[NSString stringWithFormat:L(@"alert.installfailed"),
             errInfo[NSAppleScriptErrorMessage]]];
     }
 }

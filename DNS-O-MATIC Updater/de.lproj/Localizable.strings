@@ -1,0 +1,60 @@
+/* Abschnittstitel */
+"section.account"  = "DNS-O-MATIC Account";
+"section.status"   = "Status";
+"section.hosts"    = "Hosts";
+"section.auto"     = "Automatische Updates";
+
+/* Beschriftungen */
+"label.username"   = "Benutzername:";
+"label.password"   = "Passwort:";
+"label.currentip"  = "Aktuelle IP:";
+"label.lastupdate" = "Letztes Update:";
+"label.result"     = "Ergebnis:";
+"label.opendns"    = "OpenDNS:";
+"label.hosts"      = "Hosts:";
+"label.interval"   = "Intervall:";
+
+/* Platzhalter */
+"placeholder.username" = "DNS-O-MATIC Benutzername";
+"placeholder.password" = "Passwort";
+"placeholder.hosts"    = "z.B. host1.duckdns.org, host2.duckdns.org";
+
+/* Schaltflächen */
+"button.save"      = "Speichern";
+"button.updatenow" = "Jetzt aktualisieren";
+"button.resolve"   = "Auflösen";
+
+/* Checkboxen */
+"checkbox.agent"   = "Bei Benutzer-Login starten (LaunchAgent)";
+"checkbox.daemon"  = "Beim Systemstart starten (LaunchDaemon, erfordert Admin)";
+
+/* Intervalle */
+"interval.5min"    = "Alle 5 Minuten";
+"interval.10min"   = "Alle 10 Minuten";
+"interval.30min"   = "Alle 30 Minuten";
+"interval.1hour"   = "Jede Stunde";
+"interval.6hours"  = "Alle 6 Stunden";
+
+/* Tabellenspalten */
+"col.hostname"     = "Hostname";
+"col.ip"           = "Aufgelöste IP (extern)";
+"col.status"       = "Status";
+
+/* Statusmeldungen */
+"status.saved"        = "Gespeichert.";
+"status.resolving"    = "IP wird ermittelt…";
+"status.updating"     = "DNS-O-MATIC wird aktualisiert…";
+"status.ipfailed"     = "IP-Ermittlung fehlgeschlagen.";
+"status.notreachable" = "Nicht erreichbar";
+"status.current"      = "✓ aktuell";
+"status.outdated"     = "⚠ veraltet";
+
+/* OpenDNS */
+"opendns.active"   = "✓ aktiv";
+"opendns.inactive" = "✗ nicht aktiv";
+"opendns.failed"   = "⚠ Prüfung fehlgeschlagen";
+
+/* Meldungen */
+"alert.nocredentials" = "Bitte Benutzernamen und Passwort eingeben.";
+"alert.savefirst"     = "Bitte zuerst Credentials speichern.";
+"alert.installfailed" = "Installation fehlgeschlagen:\n%@";

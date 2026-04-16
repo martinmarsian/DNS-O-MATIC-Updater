@@ -1,0 +1,60 @@
+/* Section titles */
+"section.account"  = "DNS-O-MATIC Account";
+"section.status"   = "Status";
+"section.hosts"    = "Hosts";
+"section.auto"     = "Automatic Updates";
+
+/* Labels */
+"label.username"   = "Username:";
+"label.password"   = "Password:";
+"label.currentip"  = "Current IP:";
+"label.lastupdate" = "Last Update:";
+"label.result"     = "Result:";
+"label.opendns"    = "OpenDNS:";
+"label.hosts"      = "Hosts:";
+"label.interval"   = "Interval:";
+
+/* Placeholders */
+"placeholder.username" = "DNS-O-MATIC Username";
+"placeholder.password" = "Password";
+"placeholder.hosts"    = "e.g. host1.duckdns.org, host2.duckdns.org";
+
+/* Buttons */
+"button.save"      = "Save";
+"button.updatenow" = "Update Now";
+"button.resolve"   = "Resolve";
+
+/* Checkboxes */
+"checkbox.agent"   = "Start at user login (LaunchAgent)";
+"checkbox.daemon"  = "Start at system boot (LaunchDaemon, requires Admin)";
+
+/* Intervals */
+"interval.5min"    = "Every 5 Minutes";
+"interval.10min"   = "Every 10 Minutes";
+"interval.30min"   = "Every 30 Minutes";
+"interval.1hour"   = "Every Hour";
+"interval.6hours"  = "Every 6 Hours";
+
+/* Table columns */
+"col.hostname"     = "Hostname";
+"col.ip"           = "Resolved IP (external)";
+"col.status"       = "Status";
+
+/* Status messages */
+"status.saved"        = "Saved.";
+"status.resolving"    = "Fetching IP…";
+"status.updating"     = "Updating DNS-O-MATIC…";
+"status.ipfailed"     = "IP lookup failed.";
+"status.notreachable" = "Unreachable";
+"status.current"      = "✓ up to date";
+"status.outdated"     = "⚠ outdated";
+
+/* OpenDNS */
+"opendns.active"   = "✓ active";
+"opendns.inactive" = "✗ not active";
+"opendns.failed"   = "⚠ Check failed";
+
+/* Alerts */
+"alert.nocredentials" = "Please enter username and password.";
+"alert.savefirst"     = "Please save credentials first.";
+"alert.installfailed" = "Installation failed:\n%@";
