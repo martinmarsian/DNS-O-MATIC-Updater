@@ -8,6 +8,13 @@
 - **Datumsformat systemabhängig**: Das Datumsformat folgt der in macOS eingestellten Region (z. B. `16.04.2026, 21:12:00` für Deutschland, `4/16/26, 9:12:00 PM` für USA).
 - Weitere Sprachen können durch einfaches Hinzufügen einer `xx.lproj/Localizable.strings`-Datei ergänzt werden.
 
+### Sicherheitsverbesserungen
+
+- **IP-Format-Validierung**: LaunchAgent- und LaunchDaemon-Skripte prüfen die von `api.ipify.org` zurückgegebene IP per Regex auf gültiges IPv4-Format, bevor sie in die Update-URL eingebettet wird.
+- **Moderne Keychain-API**: Umstieg von den veralteten `SecKeychain*`-Funktionen (deprecated seit macOS 10.9) auf die aktuellen `SecItemCopyMatching`, `SecItemAdd` und `SecItemUpdate` APIs. Bestehende Keychain-Einträge bleiben kompatibel.
+- **Eindeutiges Temp-Verzeichnis**: Beim Installieren des LaunchDaemons wird ein UUID-basiertes temporäres Verzeichnis verwendet statt eines vorhersehbaren Pfades (verhindert Symlink-Angriffe).
+- **Vollständige Lokalisierung der Fehlermeldungen**: Letzter verbliebener hartkodierter deutscher String ersetzt.
+
 ---
 
 ## Version 1.0.2 (Build 3)
