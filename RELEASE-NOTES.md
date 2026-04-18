@@ -1,5 +1,16 @@
 # DNS-O-MATIC Updater — Release Notes
 
+## Version 1.0.2 (Build 5)
+
+### Sicherheitsverbesserungen
+
+- **IP-Format-Validierung**: LaunchAgent- und LaunchDaemon-Skripte prüfen die von `api.ipify.org` zurückgegebene IP per Regex auf gültiges IPv4-Format, bevor sie in die Update-URL eingebettet wird.
+- **Moderne Keychain-API**: Umstieg von den veralteten `SecKeychain*`-Funktionen (deprecated seit macOS 10.9) auf die aktuellen `SecItemCopyMatching`, `SecItemAdd` und `SecItemUpdate` APIs. Bestehende Keychain-Einträge bleiben kompatibel.
+- **Eindeutiges Temp-Verzeichnis**: Beim Installieren des LaunchDaemons wird ein UUID-basiertes temporäres Verzeichnis verwendet statt eines vorhersehbaren Pfades (verhindert Symlink-Angriffe).
+- **Vollständige Lokalisierung der Fehlermeldungen**: Letzter verbliebener hartkodierter deutscher String ersetzt.
+
+---
+
 ## Version 1.0.2 (Build 4)
 
 ### Lokalisierung
