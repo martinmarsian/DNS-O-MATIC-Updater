@@ -37,6 +37,7 @@ static NSString * const kAgentScript =
     @"[ -z \"$PASSWORD\" ] && exit 1\n"
     @"IP=$(curl -sf --max-time 10 \"https://api.ipify.org\")\n"
     @"[ -z \"$IP\" ] && exit 1\n"
+    @"[[ \"$IP\" =~ ^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$ ]] || exit 1\n"
     @"RESULT=$(curl -sf --max-time 30 \\\n"
     @"  -u \"$USERNAME:$PASSWORD\" \\\n"
     @"  -A \"DNS-O-MATIC-Updater-macOS/1.0\" \\\n"
@@ -56,6 +57,7 @@ static NSString * const kDaemonScript =
     @"[ -z \"$USERNAME\" ] || [ -z \"$PASSWORD\" ] && exit 1\n"
     @"IP=$(curl -sf --max-time 10 \"https://api.ipify.org\")\n"
     @"[ -z \"$IP\" ] && exit 1\n"
+    @"[[ \"$IP\" =~ ^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$ ]] || exit 1\n"
     @"RESULT=$(curl -sf --max-time 30 \\\n"
     @"  -u \"$USERNAME:$PASSWORD\" \\\n"
     @"  -A \"DNS-O-MATIC-Updater-macOS/1.0\" \\\n"
@@ -857,58 +859,50 @@ static NSString * const kDaemonScript =
 - (NSString *)keychainPasswordForUsername:(NSString *)username {
     if (username.length == 0) return nil;
 
-    const char *server  = kKeychainServer.UTF8String;
-    const char *account = username.UTF8String;
-    UInt32 pwLen = 0; void *pwData = NULL;
+    // Ohne Protokoll-Einschränkung suchen, damit auch ältere Einträge
+    // (gespeichert mit SecKeychainAddInternetPassword) gefunden werden.
+    NSDictionary *query = @{
+        (__bridge id)kSecClass:       (__bridge id)kSecClassInternetPassword,
+        (__bridge id)kSecAttrServer:  kKeychainServer,
+        (__bridge id)kSecAttrAccount: username,
+        (__bridge id)kSecReturnData:  @YES,
+        (__bridge id)kSecMatchLimit:  (__bridge id)kSecMatchLimitOne
+    };
 
-    OSStatus status = SecKeychainFindInternetPassword(
-        NULL,
-        (UInt32)strlen(server),  server,
-        0, NULL,
-        (UInt32)strlen(account), account,
-        0, NULL, 0,
-        kSecProtocolTypeHTTPS,
-        kSecAuthenticationTypeDefault,
-        &pwLen, &pwData, NULL);
+    CFTypeRef result = NULL;
+    OSStatus status = SecItemCopyMatching((__bridge CFDictionaryRef)query, &result);
 
-    if (status == errSecSuccess && pwData) {
-        NSString *pw = [[NSString alloc] initWithBytes:pwData length:pwLen
-                                              encoding:NSUTF8StringEncoding];
-        SecKeychainItemFreeContent(NULL, pwData);
-        return pw;
+    if (status == errSecSuccess && result) {
+        NSData *data = (__bridge_transfer NSData *)result;
+        return [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
     }
     return nil;
 }
 
 - (void)saveKeychainPassword:(NSString *)password forUsername:(NSString *)username {
-    const char *server  = kKeychainServer.UTF8String;
-    const char *account = username.UTF8String;
-    const char *pw      = password.UTF8String;
+    NSData *pwData = [password dataUsingEncoding:NSUTF8StringEncoding];
 
-    SecKeychainItemRef item = NULL;
-    OSStatus found = SecKeychainFindInternetPassword(
-        NULL,
-        (UInt32)strlen(server),  server,
-        0, NULL,
-        (UInt32)strlen(account), account,
-        0, NULL, 0,
-        kSecProtocolTypeHTTPS,
-        kSecAuthenticationTypeDefault,
-        0, NULL, &item);
+    NSDictionary *query = @{
+        (__bridge id)kSecClass:       (__bridge id)kSecClassInternetPassword,
+        (__bridge id)kSecAttrServer:  kKeychainServer,
+        (__bridge id)kSecAttrAccount: username
+    };
 
-    if (found == errSecSuccess && item) {
-        SecKeychainItemModifyAttributesAndData(item, NULL, (UInt32)strlen(pw), pw);
-        CFRelease(item);
+    OSStatus found = SecItemCopyMatching((__bridge CFDictionaryRef)query, NULL);
+    if (found == errSecSuccess) {
+        // Eintrag existiert → nur Passwort aktualisieren
+        NSDictionary *update = @{ (__bridge id)kSecValueData: pwData };
+        SecItemUpdate((__bridge CFDictionaryRef)query, (__bridge CFDictionaryRef)update);
     } else {
-        SecKeychainAddInternetPassword(
-            NULL,
-            (UInt32)strlen(server),  server,
-            0, NULL,
-            (UInt32)strlen(account), account,
-            0, NULL, 0,
-            kSecProtocolTypeHTTPS,
-            kSecAuthenticationTypeDefault,
-            (UInt32)strlen(pw), pw, NULL);
+        // Neuen Eintrag anlegen
+        NSDictionary *newItem = @{
+            (__bridge id)kSecClass:        (__bridge id)kSecClassInternetPassword,
+            (__bridge id)kSecAttrServer:   kKeychainServer,
+            (__bridge id)kSecAttrAccount:  username,
+            (__bridge id)kSecAttrProtocol: (__bridge id)kSecAttrProtocolHTTPS,
+            (__bridge id)kSecValueData:    pwData
+        };
+        SecItemAdd((__bridge CFDictionaryRef)newItem, NULL);
     }
 }
 
@@ -935,7 +929,7 @@ static NSString * const kDaemonScript =
 - (void)installLaunchAgent {
     NSString *username = [self.defaults stringForKey:kPrefUsername];
     if (username.length == 0) {
-        [self showAlert:@"Bitte zuerst Credentials speichern."];
+        [self showAlert:L(@"alert.savefirst")];
         return;
     }
 
@@ -1005,7 +999,8 @@ static NSString * const kDaemonScript =
 }
 
 - (void)writeDaemonConfigForUsername:(NSString *)username password:(NSString *)password {
-    NSString *tmpDir = [NSTemporaryDirectory() stringByAppendingPathComponent:@"dns-o-matic-install"];
+    NSString *tmpDir = [NSTemporaryDirectory() stringByAppendingPathComponent:
+        [NSString stringWithFormat:@"dns-o-matic-%@", [[NSUUID UUID] UUIDString]]];
     [[NSFileManager defaultManager] createDirectoryAtPath:tmpDir
                               withIntermediateDirectories:YES attributes:nil error:nil];
 
@@ -1038,7 +1033,8 @@ static NSString * const kDaemonScript =
         return;
     }
 
-    NSString *tmpDir = [NSTemporaryDirectory() stringByAppendingPathComponent:@"dns-o-matic-install"];
+    NSString *tmpDir = [NSTemporaryDirectory() stringByAppendingPathComponent:
+        [NSString stringWithFormat:@"dns-o-matic-%@", [[NSUUID UUID] UUIDString]]];
     [[NSFileManager defaultManager] createDirectoryAtPath:tmpDir
                               withIntermediateDirectories:YES attributes:nil error:nil];
 
